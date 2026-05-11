@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("input-player-status").value = "Titular";
         document.getElementById("input-player-minutes").value = "";
         document.getElementById("input-player-goals").value = "";
-        document.getElementById("input-player-rating").value = "1";
+        document.getElementById("input-player-rating").value = "0";
         modalPlayer.classList.remove("hidden");
     });
     btnCloseModalPlayer.addEventListener("click", () => modalPlayer.classList.add("hidden"));
