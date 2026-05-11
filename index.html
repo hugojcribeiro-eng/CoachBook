@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoachBook - MatchDay Manager</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Base Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js for stats -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/33/33736.png">
+</head>
+<body>
+
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="logo">
+            <span class="highlight">Coach</span>Book
+        </div>
+    </header>
+
+    <main class="app-container">
+        
+        <!-- View 1: Match List -->
+        <section id="match-list-view" class="view active">
+            <div class="view-header">
+                <h2>Lista de Jogos</h2>
+                <button id="btn-new-match" class="btn primary">Novo Jogo</button>
+            </div>
+            
+            <div id="matches-grid" class="matches-grid">
+                <!-- Matches will be appended here dynamically -->
+            </div>
+        </section>
+
+        <!-- Modals -->
+        <!-- Modal for New Match -->
+            <div id="modal-match" class="modal hidden">
+                <div class="modal-content glass-panel">
+                    <div class="modal-header">
+                        <h3>Criar Nova Partida</h3>
+                        <button class="btn-close" id="btn-close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group row">
+                            <div class="col">
+                                <label>Equipa Visitada</label>
+                                <input type="text" id="input-home-team" placeholder="Ex: Equipa da Casa">
+                            </div>
+                            <div class="col">
+                                <label>Equipa Visitante</label>
+                                <input type="text" id="input-away-team" placeholder="Ex: FC Porto">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col">
+                                <label>Data</label>
+                                <input type="date" id="input-date">
+                            </div>
+                            <div class="col">
+                                <label>Hora</label>
+                                <input type="time" id="input-time">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col">
+                                <label>Competição</label>
+                                <input type="text" id="input-competition" placeholder="Ex: Liga Portugal">
+                            </div>
+                            <div class="col" style="flex:0.5">
+                                <label>Jornada</label>
+                                <input type="text" id="input-matchday" placeholder="Ex: 3">
+                            </div>
+
+                            <div class="col">
+                                <label>Tipo de Campo</label>
+                                <select id="input-field-type">
+                                    <option value="Relvado Sintético">Relvado Sintético</option>
+                                    <option value="Relvado Natural">Relvado Natural</option>
+                                    <option value="Terra Batida / Pelado">Terra Batida / Pelado</option>
+                                    <option value="Pavilhão">Pavilhão</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button id="btn-save-match" class="btn primary full-width">Gravar Jogo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for New Player (now GR) -->
+            <div id="modal-player" class="modal hidden">
+                <div class="modal-content glass-panel">
+                    <div class="modal-header">
+                        <h3>Adicionar Guarda-Redes</h3>
+                        <button class="btn-close" id="btn-close-modal-player">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group row">
+                            <div class="col" style="flex:0.3">
+                                <label>Nº GR</label>
+                                <input type="number" id="input-player-number" placeholder="Ex: 1">
+                            </div>
+                            <div class="col">
+                                <label>Nome do GR</label>
+                                <input type="text" id="input-player-name" placeholder="Ex: Diogo Costa" list="gk-names-list">
+                                <datalist id="gk-names-list"></datalist>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col">
+                                <label>Condição</label>
+                                <select id="input-player-status">
+                                    <option value="Titular">Titular</option>
+                                    <option value="Suplente Utilizado">Suplente Utilizado</option>
+                                    <option value="Suplente Não Utilizado">Suplente Não Utilizado</option>
+                                    <option value="Não Convocado">Não Convocado</option>
+                                    <option value="Lesionado">Lesionado</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label>Tempo Jogo (min)</label>
+                                <input type="number" id="input-player-minutes" placeholder="Ex: 90">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col">
+                                <label>Golos Sofridos</label>
+                                <input type="number" id="input-player-goals" placeholder="Ex: 0">
+                            </div>
+                            <div class="col">
+                                <label>Avaliação</label>
+                                <select id="input-player-rating">
+                                    <option value="0">0 - Não Utilizado</option>
+                                    <option value="1">1 - Muito Fraco</option>
+                                    <option value="2">2 - Muito Fraco</option>
+                                    <option value="3">3 - Fraco</option>
+                                    <option value="4">4 - Fraco</option>
+                                    <option value="5">5 - Mediano</option>
+                                    <option value="6">6 - Mediano</option>
+                                    <option value="7">7 - Bom</option>
+                                    <option value="8">8 - Bom</option>
+                                    <option value="9">9 - Jogador Chave</option>
+                                    <option value="10">10 - Jogador Chave</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button id="btn-save-player" class="btn primary full-width">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal for Match Report -->
+            <div id="modal-report" class="modal hidden">
+                <div class="modal-content glass-panel report-modal-content">
+                    <div class="modal-header">
+                        <h3>Relatório de Jogo</h3>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button id="btn-print-report" class="btn primary small">Imprimir</button>
+                            <button class="btn-close" id="btn-close-modal-report">&times;</button>
+                        </div>
+                    </div>
+                    <div id="report-container" class="report-container">
+                        <!-- Report content generated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+        <!-- View 2: Match Detail -->
+        <section id="match-detail-view" class="view hidden">
+            <div class="view-header match-header-info">
+                <button id="btn-back" class="btn secondary">&larr; Voltar</button>
+                <div class="match-title-group" style="display:flex; align-items:center; gap:1rem;">
+                    <h2 id="detail-match-title" style="margin:0;">Adversário</h2>
+                    <span id="detail-match-date" class="badge">Data</span>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button id="btn-edit-match" class="btn secondary outline">Editar Jogo</button>
+                    <button id="btn-delete-match" class="btn danger outline">Apagar Jogo</button>
+                </div>
+            </div>
+
+            <div class="match-info-grid">
+                <div class="match-info-item">
+                    <span class="match-info-label">Competição</span>
+                    <span class="match-info-value" id="info-comp">--</span>
+                </div>
+                <div class="match-info-item">
+                    <span class="match-info-label">Jornada</span>
+                    <span class="match-info-value" id="info-matchday">--</span>
+                </div>
+                <div class="match-info-item">
+                    <span class="match-info-label">Visitada (Casa)</span>
+                    <span class="match-info-value" id="info-home">--</span>
+                </div>
+                <div class="match-info-item">
+                    <span class="match-info-label">Visitante (Fora)</span>
+                    <span class="match-info-value" id="info-away">--</span>
+                </div>
+                <div class="match-info-item">
+                    <span class="match-info-label">Data</span>
+                    <span class="match-info-value" id="info-date">--</span>
+                </div>
+                <div class="match-info-item">
+                    <span class="match-info-label">Hora</span>
+                    <span class="match-info-value" id="info-time">--</span>
+                </div>
+                <div class="match-info-item">
+                    <span class="match-info-label">Campo</span>
+                    <span class="match-info-value" id="info-field">--</span>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <nav class="tabs-nav">
+                <button class="tab-btn active" data-target="tab-xi">Dados do Jogo</button>
+                <button class="tab-btn" data-target="tab-gk-events">Eventos GR</button>
+                <button class="tab-btn" data-target="tab-report-view">Report</button>
+            </nav>
+
+            <div class="tabs-content">
+                
+                <!-- Tab: Dados do Jogo (antigo XI Inicial) -->
+                <div id="tab-xi" class="tab-pane active glass-panel">
+                    
+                    <div class="module-header">
+                        <h3>Dados dos Guarda-Redes</h3>
+                        <button id="btn-add-player" class="btn outline small">+ Guarda-Redes</button>
+                    </div>
+                    <div class="gk-list-container">
+                        <ul id="gk-list" class="player-list">
+                            <!-- Players appended here -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab: Eventos GR -->
+                <div id="tab-gk-events" class="tab-pane hidden glass-panel">
+                    <div class="module-header">
+                        <h3>Registo de Eventos do Guarda-Redes</h3>
+                    </div>
+
+                    <div class="gk-events-header-box glass-panel">
+                        <div class="form-group">
+                            <label>Nome do GR</label>
+                            <select id="gk-selector">
+                                <option value="">Selecionar GR...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Titulariedade</label>
+                            <select id="gk-active-status">
+                                <option value="">--</option>
+                                <option value="Titular">Titular</option>
+                                <option value="Suplente Utilizado">Suplente Utilizado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Parte de Jogo</label>
+                            <select id="gk-match-part">
+                                <option value="1ª Parte">1ª Parte</option>
+                                <option value="2ª Parte">2ª Parte</option>
+                                <option value="Prolongamento">Prolongamento</option>
+                                <option value="Penaltis">Penaltis</option>
+                            </select>
+                        </div>
+                        <div class="stopwatch-box">
+                            <div id="stopwatch-display">00:00</div>
+                            <div class="stopwatch-controls">
+                                <button id="btn-sw-start" class="btn primary small">Iniciar</button>
+                                <button id="btn-sw-pause" class="btn outline small">Pausar</button>
+                                <button id="btn-sw-reset" class="btn secondary small">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="events-category-cards">
+                        <div id="card-defesa-baliza" class="event-card red-card">
+                            <h4>Defesa da Baliza</h4>
+                        </div>
+                        <div id="card-defesa-espaco" class="event-card orange-card">
+                            <h4>Defesa do Espaço</h4>
+                        </div>
+                        <div id="card-equipa-posse" class="event-card green-card">
+                            <h4>Equipa em Posse Bola</h4>
+                        </div>
+                    </div>
+
+                    <!-- Subcategorias: Defesa da Baliza (Dashboard Integrado) -->
+                    <div id="subcat-defesa-baliza" class="subcategories-box hidden glass-panel red-card-bg">
+                        
+                        <div class="event-groups-container">
+                            <!-- Remate -->
+                            <div class="event-group">
+                                <div class="group-label bg-red">Remate</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-red-light">Frontal</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Curta Dist.</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Remate - Frontal - Curta Distância" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Remate - Frontal - Curta Distância" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Remate - Frontal - Curta Distância" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Remate - Frontal - Curta Distância" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Média Dist.</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Remate - Frontal - Média Distância" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Remate - Frontal - Média Distância" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Remate - Frontal - Média Distância" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Remate - Frontal - Média Distância" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-red-light">Diagonal</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Curta Dist.</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Remate - Diagonal - Curta Distância" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Remate - Diagonal - Curta Distância" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Remate - Diagonal - Curta Distância" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Remate - Diagonal - Curta Distância" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Média Dist.</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Remate - Diagonal - Média Distância" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Remate - Diagonal - Média Distância" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Remate - Diagonal - Média Distância" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Remate - Diagonal - Média Distância" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cruzamento Curto -->
+                            <div class="event-group">
+                                <div class="group-label bg-purple">Cruzamento Curto</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-purple-light">Dentro Área</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Aberto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Cruzamento - Dentro Área - Aberto" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Cruzamento - Dentro Área - Aberto" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Cruzamento - Dentro Área - Aberto" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Cruzamento - Dentro Área - Aberto" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Fechado</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Cruzamento - Dentro Área - Fechado" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Cruzamento - Dentro Área - Fechado" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Cruzamento - Dentro Área - Fechado" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Cruzamento - Dentro Área - Fechado" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-purple-light">Fora Área</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Aberto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Cruzamento - Fora Área - Aberto" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Cruzamento - Fora Área - Aberto" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Cruzamento - Fora Área - Aberto" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Cruzamento - Fora Área - Aberto" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Fechado</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Cruzamento - Fora Área - Fechado" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Cruzamento - Fora Área - Fechado" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Cruzamento - Fora Área - Fechado" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Cruzamento - Fora Área - Fechado" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Saída (1xGR) -->
+                            <div class="event-group">
+                                <div class="group-label bg-pink">Saída (1xGR)</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-pink-light">Desvantagem GR</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Por Dentro</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Dentro" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Dentro" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Dentro" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Dentro" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Por Fora</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Fora" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Fora" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Fora" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - Saída - Desvantagem GR - Por Fora" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ET Defensivo -->
+                            <div class="event-group">
+                                <div class="group-label bg-yellow">ET Defensivo</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-yellow-light">Canto</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Canto Aberto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - ET Def - Canto - Aberto" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - ET Def - Canto - Aberto" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - ET Def - Canto - Aberto" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - ET Def - Canto - Aberto" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Canto Fechado</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - ET Def - Canto - Fechado" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - ET Def - Canto - Fechado" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - ET Def - Canto - Fechado" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - ET Def - Canto - Fechado" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-yellow-light">Livre</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Livre Aberto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - ET Def - Livre - Aberto" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - ET Def - Livre - Aberto" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - ET Def - Livre - Aberto" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - ET Def - Livre - Aberto" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Livre Fechado</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - ET Def - Livre - Fechado" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - ET Def - Livre - Fechado" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - ET Def - Livre - Fechado" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - ET Def - Livre - Fechado" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top: 0.5rem;">
+                                        <div class="sub-sub-grid" style="grid-template-columns: 1fr;">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Penalti</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - ET Def - Penalti" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - ET Def - Penalti" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - ET Def - Penalti" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - ET Def - Penalti" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row" style="margin-top:0.5rem">
+                                                <div class="sub-sub-info"><span>Lançamento</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Baliza - ET Def - Lançamento" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Baliza - ET Def - Lançamento" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Baliza - ET Def - Lançamento" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Baliza - ET Def - Lançamento" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subcategorias: Defesa do Espaço -->
+                    <div id="subcat-defesa-espaco" class="subcategories-box hidden glass-panel orange-card-bg">
+                        <div class="event-groups-container">
+                            <!-- Cruzamento Médio/Longo -->
+                            <div class="event-group">
+                                <div class="group-label bg-purple">Cruzamento M/L</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-purple-light">Aberto</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - Cruzamento - Aberto" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - Cruzamento - Aberto" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - Cruzamento - Aberto" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - Cruzamento - Aberto" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top: 0.5rem;">
+                                        <div class="sub-label bg-purple-light">Fechado</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - Cruzamento - Fechado" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - Cruzamento - Fechado" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - Cruzamento - Fechado" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - Cruzamento - Fechado" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Saída (1xGR) -->
+                            <div class="event-group">
+                                <div class="group-label bg-pink">Saída (1xGR)</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-pink-light">Vantagem GR</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Por Dentro</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - Saída - Por Dentro" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - Saída - Por Dentro" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - Saída - Por Dentro" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - Saída - Por Dentro" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Por Fora</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - Saída - Por Fora" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - Saída - Por Fora" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - Saída - Por Fora" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - Saída - Por Fora" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ET Defensivo -->
+                            <div class="event-group">
+                                <div class="group-label bg-yellow">ET Defensivo</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-yellow-light">Livre Frontal</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Aberto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - ET Def - Livre Frontal - Aberto" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - ET Def - Livre Frontal - Aberto" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - ET Def - Livre Frontal - Aberto" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - ET Def - Livre Frontal - Aberto" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row" style="margin-top:0.5rem">
+                                                <div class="sub-sub-info"><span>Fechado</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - ET Def - Livre Frontal - Fechado" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - ET Def - Livre Frontal - Fechado" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - ET Def - Livre Frontal - Fechado" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - ET Def - Livre Frontal - Fechado" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top: 0.5rem;">
+                                        <div class="sub-label bg-yellow-light">Livre Lateral</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Aberto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - ET Def - Livre Lateral - Aberto" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - ET Def - Livre Lateral - Aberto" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - ET Def - Livre Lateral - Aberto" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - ET Def - Livre Lateral - Aberto" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row" style="margin-top:0.5rem">
+                                                <div class="sub-sub-info"><span>Fechado</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - ET Def - Livre Lateral - Fechado" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - ET Def - Livre Lateral - Fechado" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - ET Def - Livre Lateral - Fechado" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - ET Def - Livre Lateral - Fechado" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cobertura Defensiva -->
+                            <div class="event-group">
+                                <div class="group-label bg-teal">Cobertura Def.</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-teal-light">Dentro Área</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - Cobertura - Dentro Área - Central" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - Cobertura - Dentro Área - Central" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - Cobertura - Dentro Área - Central" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - Cobertura - Dentro Área - Central" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top: 0.5rem;">
+                                        <div class="sub-label bg-teal-light">Fora Área</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Defesa Espaço - Cobertura - Fora Área - Central" data-outcome="Receção">Rec.</button>
+                                                    <button class="outcome-btn desv" data-event="Defesa Espaço - Cobertura - Fora Área - Central" data-outcome="Desvio">Desv.</button>
+                                                    <button class="outcome-btn sint" data-event="Defesa Espaço - Cobertura - Fora Área - Central" data-outcome="Sem Intervir">S.Int</button>
+                                                    <button class="outcome-btn golo" data-event="Defesa Espaço - Cobertura - Fora Área - Central" data-outcome="Golo">Golo</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subcategorias: Equipa em Posse Bola -->
+                    <div id="subcat-equipa-posse" class="subcategories-box hidden glass-panel green-card-bg">
+                        <div class="event-groups-container">
+                            <!-- Passe -->
+                            <div class="event-group">
+                                <div class="group-label bg-green">Passe</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-green-light">Sem Pressão</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - Passe - Sem Pressão" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - Passe - Sem Pressão" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - Passe - Sem Pressão" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - Passe - Sem Pressão" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top:0.5rem">
+                                        <div class="sub-label bg-green-light">Com Pressão</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - Passe - Com Pressão" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - Passe - Com Pressão" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - Passe - Com Pressão" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - Passe - Com Pressão" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Distribuição -->
+                            <div class="event-group">
+                                <div class="group-label bg-blue">Distribuição</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-blue-light">Construção</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - Distribuição - Construção" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - Distribuição - Construção" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - Distribuição - Construção" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - Distribuição - Construção" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top:0.5rem">
+                                        <div class="sub-label bg-blue-light">Transição</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - Distribuição - Transição" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - Distribuição - Transição" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - Distribuição - Transição" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - Distribuição - Transição" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="event-group">
+                                <div class="group-label bg-yellow">ET Ofensivo</div>
+                                <div class="group-buttons">
+                                    <div class="sub-group">
+                                        <div class="sub-label bg-yellow-light">Pontapé de Baliza</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Curto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - ET Ofensivo - PB - Curto" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - ET Ofensivo - PB - Curto" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - ET Ofensivo - PB - Curto" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - ET Ofensivo - PB - Curto" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row" style="margin-top:0.5rem">
+                                                <div class="sub-sub-info"><span>Longo</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - ET Ofensivo - PB - Longo" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - ET Ofensivo - PB - Longo" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - ET Ofensivo - PB - Longo" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - ET Ofensivo - PB - Longo" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top:0.5rem">
+                                        <div class="sub-label bg-yellow-light">Livre</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="sub-sub-info"><span>Curto</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - ET Ofensivo - Livre - Curto" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - ET Ofensivo - Livre - Curto" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - ET Ofensivo - Livre - Curto" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - ET Ofensivo - Livre - Curto" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                            <div class="sub-sub-row" style="margin-top:0.5rem">
+                                                <div class="sub-sub-info"><span>Longo</span></div>
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - ET Ofensivo - Livre - Longo" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - ET Ofensivo - Livre - Longo" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - ET Ofensivo - Livre - Longo" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - ET Ofensivo - Livre - Longo" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="sub-group" style="margin-top:0.5rem">
+                                        <div class="sub-label bg-yellow-light">Penalti</div>
+                                        <div class="sub-sub-grid">
+                                            <div class="sub-sub-row">
+                                                <div class="outcome-group">
+                                                    <button class="outcome-btn rec" data-event="Posse Bola - ET Ofensivo - Penalti" data-outcome="Equipa">Equipa</button>
+                                                    <button class="outcome-btn desv" data-event="Posse Bola - ET Ofensivo - Penalti" data-outcome="Fora">Fora</button>
+                                                    <button class="outcome-btn sint" data-event="Posse Bola - ET Ofensivo - Penalti" data-outcome="Interceção">Int.</button>
+                                                    <button class="outcome-btn golo" data-event="Posse Bola - ET Ofensivo - Penalti" data-outcome="Golo Marcado">Golo M.</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="events-dashboard">
+                        <div class="events-log glass-panel">
+                            <h4>Histórico do Jogo</h4>
+                            <ul id="events-list" class="activity-feed">
+                                <!-- Events appended here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Report View -->
+                <div id="tab-report-view" class="tab-pane hidden glass-panel">
+                    <div class="module-header">
+                        <h3>Resumo Estatístico do Jogo</h3>
+                        <button id="btn-show-report" class="btn primary" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.2rem;">📄</span> Gerar Relatório PDF / Imprimir
+                        </button>
+                    </div>
+                    
+                    <div id="tab-report-stats-container" class="report-tab-stats">
+                        <!-- Stats cards injected here -->
+                    </div>
+
+                    <div class="report-stats-charts-grid">
+                        <div class="detailed-summary-container glass-panel">
+                            <h4>Distribuição Detalhada (Totais)</h4>
+                            <div id="tab-report-distribution-table" class="distribution-table-box">
+                                <!-- Table injected here -->
+                            </div>
+                        </div>
+                        <div class="chart-container-tab glass-panel">
+                            <h4>Eficácia por Categoria</h4>
+                            <div id="tab-report-efficacy-bars">
+                                <!-- Efficacy bars injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-detailed-breakdown glass-panel">
+                        <h4>Detalhamento por Categoria e Ação</h4>
+                        <div id="tab-report-detailed-table" class="detailed-table-container">
+                            <!-- Detailed table injected here -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
