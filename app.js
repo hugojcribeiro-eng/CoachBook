@@ -712,12 +712,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <div class="report-section">
                 <h4>3. Análise Estatística</h4>
-                <div class="report-stats-grid">
-                    <div class="chart-box">
-                        <canvas id="chart-moments"></canvas>
-                    </div>
-                    <div class="chart-box">
-                        <canvas id="chart-categories"></canvas>
+                <div class="report-stats-grid" style="display: block;">
+                    <div class="chart-box" style="background: #f8fafc; padding: 2rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <h4 style="text-align: center; margin-bottom: 1.5rem; color: var(--text-main);">Ações por Categoria</h4>
+                        <div style="height: 350px;">
+                            <canvas id="chart-categories"></canvas>
+                        </div>
                     </div>
                 </div>
                 <div id="report-stats-table-container">
@@ -734,11 +734,10 @@ document.addEventListener("DOMContentLoaded", () => {
             html += `<li class="report-history-item">Nenhum evento registado.</li>`;
         } else {
             match.events.forEach(ev => {
-                const partStr = ev.matchPart ? ` (${ev.matchPart})` : "";
                 html += `
                     <li class="report-history-item">
                         <span class="time">${ev.minute}'</span>
-                        <span class="desc"><strong>${ev.gkName}</strong>${partStr} - ${ev.label}</span>
+                        <span class="desc"><strong>${ev.gkName}</strong> - ${ev.label}</span>
                     </li>
                 `;
             });
@@ -762,17 +761,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function processMatchStats(match) {
         const stats = {
             total: match.events.length,
-            moments: {},
             hierarchy: {}
         };
 
         match.events.forEach(ev => {
-            // Moment count
-            const m = ev.matchPart || "Não especificado";
-            stats.moments[m] = (stats.moments[m] || 0) + 1;
-
-            // Hierarchy count: Moment -> Category -> Subcat -> ...
-            const parts = [m, ...ev.label.split(" - ")];
+            // Hierarchy count: Category -> Subcat -> ...
+            const parts = ev.label.split(" - ");
             let current = stats.hierarchy;
 
             parts.forEach((part, index) => {
@@ -788,16 +782,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderReportCharts(stats) {
-        const ctxMoments = document.getElementById('chart-moments').getContext('2d');
         const ctxCats = document.getElementById('chart-categories').getContext('2d');
-
-        const momentColors = {
-            "1ª Parte": "#3b82f6",
-            "2ª Parte": "#8b5cf6",
-            "Prolongamento": "#f43f5e",
-            "Penaltis": "#ec4899"
-        };
-        const defaultMomentColor = "#94a3b8";
 
         const categoryColors = {
             "Defesa Baliza": "#ef4444",
@@ -806,25 +791,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         const defaultCategoryColor = "#334155";
 
-        new Chart(ctxMoments, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(stats.moments),
-                datasets: [{
-                    data: Object.values(stats.moments),
-                    backgroundColor: Object.keys(stats.moments).map(m => momentColors[m] || defaultMomentColor)
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: { display: true, text: 'Ações por Momento' },
-                    legend: { position: 'bottom' }
-                }
-            }
-        });
-
-        // Top categories for second chart
         const catLabels = Object.keys(stats.hierarchy);
         const catData = catLabels.map(l => stats.hierarchy[l].count);
 
@@ -841,9 +807,13 @@ document.addEventListener("DOMContentLoaded", () => {
             options: {
                 indexAxis: 'y',
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: 'Ações por Categoria' },
                     legend: { display: false }
+                },
+                scales: {
+                    x: { beginAtZero: true, grid: { display: false } },
+                    y: { grid: { display: false } }
                 }
             }
         });
@@ -854,20 +824,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <table class="report-stats-table">
                 <thead>
                     <tr>
-                        <th>Estrutura (Momento > Categoria > Ação)</th>
+                        <th>Estrutura (Categoria > Sub-Categoria > Ação)</th>
                         <th style="width: 100px; text-align: center;">Qtd</th>
                         <th style="width: 150px;">Distribuição</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
-
-        const momentColors = {
-            "1ª Parte": "#3b82f6",
-            "2ª Parte": "#8b5cf6",
-            "Prolongamento": "#f43f5e",
-            "Penaltis": "#ec4899"
-        };
 
         const categoryColors = {
             "Defesa Baliza": "#ef4444",
@@ -883,17 +846,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 const item = node[key];
                 const percent = Math.round((item.count / stats.total) * 100);
                 
-                let currentColor = parentColor || defaultColor;
+                let currentColor = level === 0 ? (categoryColors[key] || defaultColor) : parentColor;
                 
-                if (level === 0) { // Moment level
-                    currentColor = momentColors[key] || "#64748b";
-                } else if (level === 1) { // Category level
-                    currentColor = categoryColors[key] || currentColor;
-                }
-
                 html += `
                     <tr class="level-${level}">
-                        <td style="color: ${level <= 1 ? currentColor : 'inherit'}; font-weight: ${level <= 1 ? '800' : 'normal'}">${key}</td>
+                        <td style="color: ${level === 0 ? currentColor : 'inherit'}; font-weight: ${level === 0 ? '800' : 'normal'}">${key}</td>
                         <td style="text-align: center;"><span class="count-badge" style="background-color: ${currentColor}">${item.count}</span></td>
                         <td>
                             <div class="stat-bar-container">
